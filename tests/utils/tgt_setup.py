@@ -9,7 +9,6 @@ from urllib.parse import urlencode
 from config import *
 from StordGitBuildFio import *
 
-
 def init_components():
     etcd_ips = "127.0.0.1"
     data = { "service_type": "test_server", "service_instance" : 0, "etcd_ips" : "%s" %EtcdIps}
@@ -182,31 +181,6 @@ if __name__ == '__main__':
 
     print ("Cleanup existing crap first")
     do_cleanup()
-    '''
-    # build_dir_name = BuildDirName()
-    build_dir_name = "build2019-02-11-10:00"
-    print ("build_dir_name : %s" % build_dir_name)
-
-    print("Building STORD")
-    stord = Stord("/home/prasad/", "master", "Release", stord_args)
-    stord.Clone()
-    stord.Build(build_dir_name)
-
-    print("Building TGTD")
-    tgtd = Tgtd("/home/prasad/", "master", "Release", tgtd_args)
-    tgtd.Clone()
-    tgtd.Build(build_dir_name)
-    init_done = False
-
-    if not stord.IsRunning():
-        stord.Run()
-
-    if not tgtd.IsRunning():
-        tgtd.Run()
-    #print("TGTD = %d, STORD = %d ETCD = %d" % (tgtd.Pid(), stord.Pid(), etcd.Pid()))
-    print("TGTD = %d, STORD = %d" % (tgtd.Pid(), stord.Pid()))
-    time.sleep(6)
-    '''
     cnt = 1
     vm_id = 1
     vmdk_id = 1
@@ -220,70 +194,3 @@ if __name__ == '__main__':
     do_setup(vm_id, vmdk_id)
     print ("do setup done")
 
-'''
-    print ("running fio")
-    print ("fio_args : %s" % fio_args)
-    print ("running fio")
-    print ("fio_args : %s" % fio_args)
-    fio = Fio('/usr/bin/fio', fio_args)
-    fio.Run()
-    print ("Fio Started succesfully")
-    while True:
-        print ("Iteration %s" % cnt)
-        print ("Sleeping for 60 minutes")
-
-        time.sleep(3600)
-
-        print ("Crashing TGT")
-        tgtd.Crash()
-
-        print ("sleeping for 90 seconds before restart")
-        time.sleep(90)
-        if tgtd.IsRunning():
-            print ("TGT is not crashed, Still running.")
-            sys.exit(1)
-
-        print ("Starting TGTD")
-        tgtd.Run()
-        print ("sleeping for 10 seconds after TGTD service restart")
-        time.sleep(10)
-        if not tgtd.IsRunning():
-            print ("TGT is not running.")
-            sys.exit(1)
-
-
-        print("TGTD = %d, STORD = %d" % (tgtd.Pid(), stord.Pid()))
-        print ("re-exporting the luns at TGT side")
-        # Start TGT
-        data = { "service_type": "test_server", "service_instance" : 0, "etcd_ips" : "%s" %EtcdIps}
-        r = requests.post("%s://%s/ha_svc/v1.0/component_start" %(h, TgtUrl), data=json.dumps(data), headers=headers, cert=cert, verify=False)
-        assert (r.status_code == 200)
-        print ("TGT: start component done")
-
-        # Add new stord to tgt
-        stord_data = { "StordIp": StordIp, "StordPort": TgtToStordPort}
-        print ("stord_data : %s" % stord_data)
-        r = requests.post("%s://%s/tgt_svc/v1.0/new_stord" % (h, TgtUrl), data=json.dumps(stord_data), headers=headers, cert=cert, verify=False)
-        assert (r.status_code == 200)
-        print ("TGT: stord added")
-
-        vm_data1 = {"TargetName": "%s" %TargetName}
-        TargetID = vm_id
-        LunID = vmdk_id
-        r = requests.post("%s://%s/tgt_svc/v1.0/target_create/?tid=%s" % (h, TgtUrl, TargetID), data=json.dumps(vm_data1), headers=headers, cert=cert, verify=False)
-        assert (r.status_code == 200)
-        print ("TGT: New target added: %s" % vm_id)
-
-        data2 = {"DevName": "%s" %(DevName), "VmID":"%s" %vm_id, "VmdkID":"%s" %vmdk_id, "LunSize":"%s" %size_in_gb}
-        r = requests.post("%s://%s/tgt_svc/v1.0/lun_create/?tid=%s&lid=%s" % (h, TgtUrl, TargetID, LunID), data=json.dumps(data2), headers=headers, cert=cert, verify=False)
-        assert (r.status_code == 200)
-        print ("TGT: New VMDK: %s added for VM: %s" %(vm_id, vmdk_id))
-
-        print ("sleeping for 10 seconds")
-        time.sleep(10)
-        if not fio.IsRunning():
-            print ("FIO crashed.")
-            sys.exit(1)
-
-        cnt = cnt + 1
-'''
